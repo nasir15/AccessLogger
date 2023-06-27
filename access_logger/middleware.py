@@ -19,16 +19,18 @@ class AccessLogsMiddleware:
                 try:
                     body = json.loads(request.body.decode())
                     body = repr([(item, value) for item, value in body.items()])
-                except:
+                except KeyError as e:
                     body = None
+                    raise e
             else:
                 try:
                     if request.method == 'GET':
                         body = repr([(item, value if not isinstance(value, File) else value.name) for item, value in request.GET.items()])
                     if request.method == 'POST':
                         body = repr([(item, value if not isinstance(value, File) else value.name) for item, value in request.POST.items()])
-                except:
+                except KeyError as e:
                     body = None
+                    raise e
         else:
             body = None
 
@@ -43,16 +45,19 @@ class AccessLogsMiddleware:
             view_name = request.resolver_match.func.__name__
         except:
             pass
+
         data = ''
         try:
             data = repr(response.data)
-        except:
-            pass
-        UserModel = get_user_model()
+        except KeyError as e:
+            print("e is ",e)
+            raise e
+        
+        user_model = get_user_model()
         uuid = request.POST.get('uuid', None)
         if uuid:
             uuid = uuid.lower()
-        r = AccessLogs.objects.create(
+        AccessLogs.objects.create(
             url_path=request.path,
             view_name=view_name,
             method=request.method,
@@ -62,7 +67,7 @@ class AccessLogsMiddleware:
             form_data=body,
             uuid=uuid,
             file_params=file_params,
-            accessed_by=request.user if type(request.user)==UserModel else None,
+            accessed_by=request.user if type(request.user)==user_model else None,
             results = data
         )
         # Code to be executed for each request/response after
