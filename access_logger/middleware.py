@@ -14,7 +14,7 @@ class AccessLogsMiddleware:
         # Code to be executed for each request before
         # the view (and later middleware) are called.
         body = None
-        if not 'api-token-auth' in request.path:
+        if 'api-token-auth' not in request.path:
             if 'json' in request.headers.get('Content-Type',{}):
                 try:
                     body = json.loads(request.body.decode())
